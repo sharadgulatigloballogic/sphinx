@@ -1409,6 +1409,28 @@ arg_ : type
 
         self.assertEqual(expected, actual)
 
+    def test_underscore_in_attribute_strip_signature_backslash(self):
+        docstring = """
+Attributes
+----------
+
+arg_ : type
+    some description
+"""
+
+        expected = """
+.. attribute:: arg_
+   :type: type
+
+   some description
+"""
+
+        config = Config(napoleon_use_ivar=False)
+        app = mock.Mock()
+        actual = str(NumpyDocstring(docstring, config, app, "class"))
+
+        self.assertEqual(expected, actual)
+
     def test_raises_types(self):
         docstrings = [("""
 Example Function

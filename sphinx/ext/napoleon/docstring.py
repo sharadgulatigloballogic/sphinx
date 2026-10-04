@@ -585,7 +585,14 @@ class GoogleDocstring:
                 if _type:
                     lines.append(':vartype %s: %s' % (_name, _type))
             else:
-                lines.append('.. attribute:: ' + _name)
+                # _name may have an escaped trailing underscore (added by
+                # _escape_args_and_kwargs for inline field-list roles such as
+                # :param: or :ivar:), but that escape is unnecessary -- and
+                # renders as a literal backslash -- when used as the argument
+                # of a directive such as .. attribute::, so undo it here.
+                _attribute_name = (_name[:-2] + '_' if _name.endswith('\\_')
+                                    else _name)
+                lines.append('.. attribute:: ' + _attribute_name)
                 if self._opt and 'noindex' in self._opt:
                     lines.append('   :noindex:')
                 if _type:

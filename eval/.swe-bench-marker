@@ -1,0 +1,4 @@
+swe-custom-bench eval branch — base_commit: 752d3285d250bbaf673cff25e83f03f247502021
+repo: sphinx-doc/sphinx
+branch: eval-sphinx-doc__sphinx-7686-set-b
+set: set_b (first instance)

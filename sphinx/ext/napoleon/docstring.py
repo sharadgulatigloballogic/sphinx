@@ -318,13 +318,20 @@ class GoogleDocstring:
             return [line[min_indent:] for line in lines]
 
     def _escape_args_and_kwargs(self, name: str) -> str:
-        if name.endswith('_'):
-            name = name[:-1] + r'\_'
-
+        # Trailing underscores are only ambiguous (and need escaping) when
+        # the name is combined with a leading '*'/'**', e.g. '*args_' or
+        # '**kwargs_'. Plain attribute/parameter names like 'hello_' render
+        # fine unescaped, so leave them untouched (see #7738).
         if name[:2] == '**':
-            return r'\*\*' + name[2:]
+            name = name[2:]
+            if name.endswith('_'):
+                name = name[:-1] + r'\_'
+            return r'\*\*' + name
         elif name[:1] == '*':
-            return r'\*' + name[1:]
+            name = name[1:]
+            if name.endswith('_'):
+                name = name[:-1] + r'\_'
+            return r'\*' + name
         else:
             return name
 
@@ -585,14 +592,7 @@ class GoogleDocstring:
                 if _type:
                     lines.append(':vartype %s: %s' % (_name, _type))
             else:
-                # _name may have an escaped trailing underscore (added by
-                # _escape_args_and_kwargs for inline field-list roles such as
-                # :param: or :ivar:), but that escape is unnecessary -- and
-                # renders as a literal backslash -- when used as the argument
-                # of a directive such as .. attribute::, so undo it here.
-                _attribute_name = (_name[:-2] + '_' if _name.endswith('\\_')
-                                    else _name)
-                lines.append('.. attribute:: ' + _attribute_name)
+                lines.append('.. attribute:: ' + _name)
                 if self._opt and 'noindex' in self._opt:
                     lines.append('   :noindex:')
                 if _type:

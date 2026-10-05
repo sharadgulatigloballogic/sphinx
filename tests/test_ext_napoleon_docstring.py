@@ -429,6 +429,38 @@ Attributes:
 """
         self.assertEqual(expected, actual)
 
+    def test_underscore_in_attribute(self):
+        docstring = """\
+Attributes:
+    hello_: int
+        hi
+"""
+
+        actual = str(GoogleDocstring(docstring))
+        expected = """\
+.. attribute:: hello_
+   :type: int
+
+   hi
+"""
+        self.assertEqual(expected, actual)
+
+    def test_underscore_in_attribute_use_ivar(self):
+        docstring = """\
+Attributes:
+    hello_: int
+        hi
+"""
+
+        config = Config(napoleon_use_ivar=True)
+        app = mock.Mock()
+        actual = str(GoogleDocstring(docstring, config, app, "class"))
+        expected = """\
+:ivar hello_: hi
+:vartype hello_: int
+"""
+        self.assertEqual(expected, actual)
+
     def test_code_block_in_returns_section(self):
         docstring = """
 Returns:
@@ -1399,8 +1431,8 @@ arg_ : type
 """
 
         expected = """
-:ivar arg\\_: some description
-:vartype arg\\_: type
+:ivar arg_: some description
+:vartype arg_: type
 """
 
         config = Config(napoleon_use_ivar=True)

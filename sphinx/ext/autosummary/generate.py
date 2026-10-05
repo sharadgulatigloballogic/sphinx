@@ -246,7 +246,6 @@ def generate_autosummary_content(name: str, obj: Any, parent: Any,
     ns.update(context)
 
     if doc.objtype == 'module':
-        ns['members'] = dir(obj)
         ns['functions'], ns['all_functions'] = \
             get_members(obj, {'function'}, imported=imported_members)
         ns['classes'], ns['all_classes'] = \
@@ -254,10 +253,16 @@ def generate_autosummary_content(name: str, obj: Any, parent: Any,
         ns['exceptions'], ns['all_exceptions'] = \
             get_members(obj, {'exception'}, imported=imported_members)
         ns['attributes'], ns['all_attributes'] = \
-            get_module_attrs(ns['members'])
+            get_module_attrs(dir(obj))
         ispackage = hasattr(obj, '__path__')
         if ispackage and recursive:
             ns['modules'], ns['all_modules'] = get_modules(obj)
+        else:
+            ns['modules'], ns['all_modules'] = [], []
+
+        ns['members'] = (ns['all_functions'] + ns['all_classes'] +
+                          ns['all_exceptions'] + ns['all_attributes'] +
+                          ns['all_modules'])
     elif doc.objtype == 'class':
         ns['members'] = dir(obj)
         ns['inherited_members'] = \

@@ -19,7 +19,10 @@ from sphinx import addnodes
 from sphinx.ext.autosummary import (
     autosummary_table, autosummary_toc, mangle_signature, import_by_name, extract_summary
 )
-from sphinx.ext.autosummary.generate import AutosummaryEntry, generate_autosummary_docs, main as autogen_main
+from sphinx.ext.autosummary.generate import (
+    AutosummaryEntry, generate_autosummary_content, generate_autosummary_docs,
+    main as autogen_main
+)
 from sphinx.testing.util import assert_node, etree_parse
 from sphinx.util.docutils import new_document
 from sphinx.util.osutil import cd
@@ -364,6 +367,32 @@ def test_autosummary_imported_members(app, status, warning):
                 '   \n' in module)
     finally:
         sys.modules.pop('autosummary_dummy_package', None)
+
+
+@pytest.mark.sphinx('dummy', **default_kw)
+def test_generate_autosummary_content_members_not_imported(app, status, warning):
+    # a module which only imports another module (like the "import os"
+    # example from the bug report) must not leak the imported name or any
+    # dunder attribute into the ``members`` template variable when
+    # autosummary_imported_members is False (the default).
+    import types
+
+    module = types.ModuleType('autosummary_dummy_import_only')
+    exec('import os', module.__dict__)
+    sys.modules['autosummary_dummy_import_only'] = module
+    try:
+        template = Mock()
+        generate_autosummary_content('autosummary_dummy_import_only', module, None,
+                                      template, None, False, app, False, {})
+
+        assert template.render.call_count == 1
+        _, context = template.render.call_args[0]
+        assert context['members'] == []
+        assert 'os' not in context['members']
+        assert '__loader__' not in context['members']
+        assert '__builtins__' not in context['members']
+    finally:
+        sys.modules.pop('autosummary_dummy_import_only', None)
 
 
 @pytest.mark.sphinx(testroot='ext-autodoc',
